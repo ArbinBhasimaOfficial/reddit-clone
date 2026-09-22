@@ -13,5 +13,6 @@ import { Server } from "./http/server.js";
 const server = new Server();
 server
   .startServer()
+  .createGlobalPrefix("api")
   .registerRoutes("v1", v1Router)
   .registerRoutes("v2", v2Router);
