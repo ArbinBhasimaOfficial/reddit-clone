@@ -21,7 +21,11 @@
   "packageManager": "pnpm@12.5.1",
   "type": "module",
   "devDependencies": {
+    "@types/express": "^5.0.6",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
   }
 }
