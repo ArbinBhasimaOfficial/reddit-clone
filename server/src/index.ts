@@ -13,6 +13,7 @@ import { Server } from "./http/server.js";
 const server = new Server();
 server
   .startServer()
+  .registerHealthCheckup()
   .createGlobalPrefix("api")
   .registerRoutes("v1", v1Router)
   .registerRoutes("v2", v2Router);

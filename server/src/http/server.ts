@@ -44,6 +44,17 @@ export class Server {
     return this;
   }
 
+  registerHealthCheckup () {
+    this.app.get("/",(req,res) => {
+        res.redirect("/health");
+    })
+    this.app.use("/health", (req, res) => {
+        res.status(200).send("OK");
+    })
+    return this;
+  }
+
+
   registerRoutes(prefix: string, router: Router) {
     const cleanPrefix = prefix.replace(/^\/+/, "");
     // Combine global prefix and route prefix
@@ -54,7 +65,4 @@ export class Server {
     return this;
   } // this helps to register multiple routes.
 
-  someOtherFunc() {
-    return this;
-  }
 }
