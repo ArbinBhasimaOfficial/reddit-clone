@@ -1,5 +1,5 @@
-import {createServer, listen} from "./http/server.js";
+import {createServer, listen, registerRoutes} from "./http/server.js";
 
 const app = createServer();
-
-listen(app)
+listen(app);
+registerRoutes(app);
