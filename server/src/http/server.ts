@@ -1,5 +1,4 @@
 import express, { Router, type Express } from "express";
-import { v1Router } from "./routes/v1/router.js";
 
 // export function createServer() {
 //   const app = express();
@@ -22,8 +21,8 @@ export class Server {
     public app: Express;
 
     constructor() {
-        this.app = express();
-        return this;
+        this.app = express(); // creates an express function.
+        return this; // this represents the Server instance
     }
 
     startServer() {
@@ -36,7 +35,7 @@ export class Server {
     registerRoutes(prefix: string, router: Router) {
         this.app.use(`/api/${prefix}`, router);
         return this;
-    }
+    } // this helps to register multiple routes.
 
     someOtherFunc() {
         this.app;
