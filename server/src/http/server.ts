@@ -1,68 +1,54 @@
-import express, { Router, type Express } from "express";
-
-// export function createServer() {
-//   const app = express();
-//   return app;
-// }
-
-// export function listen(app: Express) {
-//   app.listen(3000, () => {
-//     console.log(`Server is running on Port: ${3000}`);
-//   });
-// }
-
-// export function registerRoutes(app: Express) {
-//   app.use("/api/v1", v1Router);
-// }
-
-// OR
+import express, { Router, type Express, type RequestHandler } from "express";
 
 export class Server {
   public app: Express;
   private globalPrefix: string = "";
 
   constructor() {
-    this.app = express(); // creates an express function.
-    return this; // this represents the Server instance
+    this.app = express();
+    return this;
   }
 
-  startServer() {
-    this.app.listen(3000, () => {
-      console.log(`Server is running on port ${3000}`);
+  // Attach any middleware to the chain (e.g. json body parsing, cors, ...)
+  useMiddleware(...handlers: RequestHandler[]) {
+    this.app.use(...handlers);
+    return this;
+  }
+
+  registerHealthCheckup() {
+    this.app.get("/", (_req, res) => {
+      res.redirect("/health");
+    });
+    this.app.use("/health", (_req, res) => {
+      res.status(200).send("OK");
     });
     return this;
   }
 
   createGlobalPrefix(prefix: string) {
     this.globalPrefix = prefix.replace(/^\/+|\/+$/g, "");
-    this.app.use(`/${this.globalPrefix}`, (req, res, next) => {
-      console.log(
-        `Global prefix /${this.globalPrefix} applied to request: ${req.method} ${req.originalUrl}`,
-      );
+    this.app.use(`/${this.globalPrefix}`, (req, _res, next) => {
+      console.log(`[${this.globalPrefix}] ${req.method} ${req.originalUrl}`);
       next();
     });
     return this;
   }
 
-  registerHealthCheckup () {
-    this.app.get("/",(req,res) => {
-        res.redirect("/health");
-    })
-    this.app.use("/health", (req, res) => {
-        res.status(200).send("OK");
-    })
-    return this;
-  }
-
-
+  // Prefix lives here, sub-paths live inside each router.
   registerRoutes(prefix: string, router: Router) {
     const cleanPrefix = prefix.replace(/^\/+/, "");
-    // Combine global prefix and route prefix
     const fullPath = this.globalPrefix
       ? `/${this.globalPrefix}/${cleanPrefix}`
       : `/${cleanPrefix}`;
     this.app.use(fullPath, router);
     return this;
-  } // this helps to register multiple routes.
+  }
 
+  // Always last in the chain: listen only after everything is registered.
+  startServer(port: number = 3000) {
+    this.app.listen(port, () => {
+      console.log(`Server is running on port ${port}`);
+    });
+    return this;
+  }
 }

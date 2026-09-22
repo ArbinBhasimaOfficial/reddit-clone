@@ -1,19 +1,13 @@
-// import { createServer, listen, registerRoutes } from "./http/server.js";
-
-// const app = createServer();
-// registerRoutes(app);
-// listen(app);
-
-// OR
+import { json } from "express";
 
 import { v1Router } from "./http/routes/v1/router.js";
-import { v2Router } from "./http/routes/v2/router.js";
 import { Server } from "./http/server.js";
 
 const server = new Server();
+
 server
-  .startServer()
   .registerHealthCheckup()
+  .useMiddleware(json()) // bodies must be parsed before any route reads them
   .createGlobalPrefix("api")
   .registerRoutes("v1", v1Router)
-  .registerRoutes("v2", v2Router);
+  .startServer(); // last: nothing listens until everything is registered

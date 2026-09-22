@@ -1,14 +1,11 @@
 import { Router } from "express";
+import { createPostRouter } from "../../../modules/post/post.routes.js";
+
 export const v1Router = Router();
 
-v1Router.get("/", (req, res) => {
-  const msg = "Welcome to the Version One APIs Page."
-  console.log(msg);
-  res.send(msg);
+// Terminal handler: ends the chain by responding.
+v1Router.get("/", (_req, res) => {
+  res.send("Version One API Page.");
 });
 
-v1Router.get("/health", (req, res) => {
-  const msg = "Player One Health: 100%";
-  console.log(msg);
-  res.send(msg)
-});
+v1Router.use("/post", createPostRouter())

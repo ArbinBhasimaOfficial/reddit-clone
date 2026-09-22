@@ -19,16 +19,21 @@ The project follows a versioned HTTP routing architecture designed around OOP an
 
 ```text
 .
-├── src/
-│   ├── http/
-│   │   └── routes/
-│   │       ├── v1/
-│   │       │   └── router.ts   # Configures v1Router
-│   │       └── v2/
-│   │           └── router.ts   # Configures v2Router
-│   └── app.ts / index.ts       # Server initialization
-├── package.json
-├── tsconfig.json
+├── client/                     # Frontend (not yet implemented)
+├── server/
+│   ├── src/
+│   │   ├── http/
+│   │   │   ├── server.ts       # Server class (OOP chaining)
+│   │   │   └── routes/
+│   │   │       ├── v1/
+│   │   │       │   └── router.ts   # Configures v1Router
+│   │   │       └── v2/
+│   │   │           └── router.ts   # Configures v2Router
+│   │   ├── modules/
+│   │   │   └── post/           # Post module (routes/controller/service)
+│   │   └── index.ts            # Server initialization
+│   ├── package.json
+│   └── tsconfig.json
 └── README.md
 ```
 
@@ -72,10 +77,13 @@ pnpm --version
 
 2. **Install dependencies:**
    ```bash
+   cd server
    pnpm install
    ```
 
 ### Scripts
+
+All scripts run from the `server/` directory:
 
 * **Build the TypeScript code:**
   ```bash
