@@ -30,7 +30,7 @@ The project follows a versioned HTTP routing architecture designed around OOP an
 │   │   │       └── v2/
 │   │   │           └── router.ts   # v2Router (exists, not mounted yet)
 │   │   ├── modules/
-│   │   │   ├── post/            # Post module (routes/controller/service)
+│   │   │   ├── post/            # Post module (types/routes/controller/service)
 │   │   │   └── user/            # User module (routes/controller/service)
 │   │   └── index.ts            # Server initialization
 │   ├── package.json
@@ -45,7 +45,7 @@ The project follows a versioned HTTP routing architecture designed around OOP an
 - **OOP Function Chaining:** Server configuration and route registration leverage method chaining for clean readability and setup.
 - **API Versioning:** Versioned routes mounted under a global `api` prefix — `/api/v1` is handled by `v1Router`.
 - **Health Monitoring:** Pre-configured system health endpoints.
-- **Module Architecture:** Feature modules (posts, users) split into `routes → controller → service` layers, composed into their version router.
+- **Module Architecture:** Feature modules (posts, users) split into `routes → controller → service` layers, composed into their version router. Posts are modeled by a shared `post.types.ts` type that the service, controller, and validation middleware all follow.
 
 ### Implemented Routes
 
@@ -55,15 +55,30 @@ The project follows a versioned HTTP routing architecture designed around OOP an
 | `GET` | `/health` | Application health check → `OK` | `server.ts` |
 | `GET` | `/api/v1` | Version 1 welcome page | `v1Router` (`src/http/routes/v1/router.ts`) |
 | `GET` | `/api/v1/post` | List all posts (newest first) | post module (`src/modules/post/`) |
-| `GET` | `/api/v1/post/:id` | Get a single post by its ID | post module (`src/modules/post/`) |
-| `POST` | `/api/v1/post` | Create a post — `title` and `body` required → `201` | post module (`src/modules/post/`) |
+| `GET` | `/api/v1/post/:id` | Get a post by its UUID → `404` if unknown | post module (`src/modules/post/`) |
+| `POST` | `/api/v1/post` | Create a post — `title`, `content`, `createdBy` required (`images` optional) → `201` | post module (`src/modules/post/`) |
+| `PUT` | `/api/v1/post/:id` | Fully replace a post (same body as `POST`) → `200`, `404` if unknown | post module (`src/modules/post/`) |
+| `DELETE` | `/api/v1/post/:id` | Delete a post → `204`, `404` if unknown | post module (`src/modules/post/`) |
 | `GET` | `/api/v1/user` | List all users (newest first) | user module (`src/modules/user/`) |
-| `GET` | `/api/v1/user/:id` | Get a single user by their ID | user module (`src/modules/user/`) |
+| `GET` | `/api/v1/user/:id` | Get a single user by their numeric ID | user module (`src/modules/user/`) |
 | `POST` | `/api/v1/user` | Create a user — `username` and `email` required, username must be unique → `201` | user module (`src/modules/user/`) |
 
-**Error responses:** `400 {"error": ...}` for missing fields or a non-numeric `:id`, `404 {"error": ...}` for an unknown post/user ID, `409 {"error": "username already taken"}` for a duplicate username.
+**Example `POST /api/v1/post` body** (the shape comes from `src/modules/post/post.types.ts`):
 
-> **Note:** posts are stored in memory — restarting the server clears them.
+```json
+{
+  "title": "Hello",
+  "content": "My first post",
+  "images": ["https://example.com/img.png"],
+  "createdBy": { "id": "u-1", "name": "arbin" }
+}
+```
+
+`title`, `content`, and `createdBy` are required — `images` is optional and defaults to `[]`. Post `id` is generated server-side as a UUID.
+
+**Error responses:** `400 {"error": ...}` for invalid request bodies (user routes also return `400 "id must be a number"` — post ids are UUID strings, so any unknown post id is simply `404`), `404 {"error": ...}` for an unknown post/user ID, `409 {"error": "username already taken"}` for a duplicate username.
+
+> **Note:** posts and users are stored in memory — restarting the server clears them.
 
 ---
 

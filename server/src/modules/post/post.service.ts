@@ -1,25 +1,22 @@
-export interface Post {
-  id: number;
-  title: string;
-  body: string;
-  createdAt: Date;
-}
+import type { PostCreateInput } from "./schemas/create.schema.js";
 
-export interface CreatePostInput {
-  title: string;
-  body: string;
-}
+// The schema defines what a client may send; the stored Post is that
+// payload plus the id the server generates.
+export type Post = PostCreateInput & { id: string };
+
+// Create and update payloads are exactly what postCreateSchema validates.
+export type CreatePostInput = PostCreateInput;
 
 // In-memory store for now — swap for a real database later.
 const posts: Post[] = [];
-let nextId = 1;
 
 export function createPost(input: CreatePostInput): Post {
   const post: Post = {
-    id: nextId++,
+    id: crypto.randomUUID(), // string id, like a database would give you
     title: input.title.trim(),
-    body: input.body.trim(),
-    createdAt: new Date(),
+    content: input.content.trim(),
+    images: input.images,
+    createdBy: input.createdBy,
   };
 
   posts.unshift(post); // newest first
@@ -30,6 +27,32 @@ export function listPosts(): Post[] {
   return posts;
 }
 
-export function getPost(id: number): Post | undefined {
+export function getPost(id: string): Post | undefined {
   return posts.find((post) => post.id === id);
+}
+
+// Full replace: PUT sends a complete post (validatePostBody enforces the shape).
+export function updatePost(id: string, input: CreatePostInput): Post | undefined {
+  const post = getPost(id);
+
+  if (!post) {
+    return undefined;
+  }
+
+  post.title = input.title.trim();
+  post.content = input.content.trim();
+  post.images = input.images;
+  post.createdBy = input.createdBy;
+  return post;
+}
+
+export function deletePost(id: string): boolean {
+  const index = posts.findIndex((post) => post.id === id);
+
+  if (index === -1) {
+    return false;
+  }
+
+  posts.splice(index, 1);
+  return true;
 }
