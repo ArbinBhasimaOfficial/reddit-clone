@@ -8,7 +8,7 @@ v1Router.get("/", (req, res) => {
 });
 
 v1Router.get("/health", (req, res) => {
-  const msg = "Health: 100%";
+  const msg = "Player One Health: 100%";
   console.log(msg);
   res.send(msg)
 });
