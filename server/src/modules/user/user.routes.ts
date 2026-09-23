@@ -3,8 +3,10 @@ import type { NextFunction, Request, Response } from "express";
 
 import {
   handleCreateUser,
+  handleDeleteUser,
   handleGetUser,
   handleListUsers,
+  handleUpdateUser,
 } from "./user.controller.js";
 
 // Middleware in the chain: validates, then passes control on.
@@ -31,6 +33,8 @@ export function createUserRouter(): Router {
   router.get("/", handleListUsers);
   router.get("/:id", handleGetUser);
   router.post("/", requireUserBody, handleCreateUser);
+  router.put("/:id", requireUserBody, handleUpdateUser);
+  router.delete("/:id", handleDeleteUser);
 
   return router;
 }

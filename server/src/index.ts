@@ -10,4 +10,5 @@ server
   .useMiddleware(json()) // bodies must be parsed before any route reads them
   .createGlobalPrefix("api")
   .registerRoutes("v1", v1Router)
+  .registerErrorHandler() // after routes: only catches errors reaching next(err) from earlier in the chain
   .startServer(); // last: nothing listens until everything is registered

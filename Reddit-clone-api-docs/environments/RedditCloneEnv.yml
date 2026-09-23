@@ -1,0 +1,11 @@
+name: RedditCloneEnv
+variables:
+  - name: BASE_URL
+    value: http://localhost:3000
+    description: ""
+  - name: POST_ID
+    value: c0c0b0ca-0166-426e-80b6-f76813c394f0
+    description: ""
+  - name: USER_ID
+    value: "1"
+    description: ""

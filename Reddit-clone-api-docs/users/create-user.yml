@@ -1,0 +1,32 @@
+info:
+  name: Create User
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{BASE_URL}}/api/v1/user"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "username": "arbin",
+        "email": "arbin@example.com"
+      }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |-
+  Returns 201 with the created user and a numeric `id` (1, 2, ...).
+
+  409 = username already taken (usernames are unique — change the
+  username before re-running against the same server session).
+  400 = username or email missing.

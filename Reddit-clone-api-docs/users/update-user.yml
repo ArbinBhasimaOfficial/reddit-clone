@@ -1,0 +1,32 @@
+info:
+  name: Update User
+  type: http
+  seq: 4
+
+http:
+  method: PUT
+  url: "{{BASE_URL}}/api/v1/user/{{USER_ID}}"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "username": "arbin",
+        "email": "new@example.com"
+      }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |-
+  Full replace of username + email — id and createdAt are preserved.
+
+  200 = updated · 400 = missing field or non-numeric id · 404 = unknown id.
+  409 = the new username belongs to a different user (keeping your own
+  username while changing email is fine).

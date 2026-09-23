@@ -1,0 +1,35 @@
+info:
+  name: Create Post
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{BASE_URL}}/api/v1/post"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "title": "Post1",
+        "content": "first post",
+        "images": ["https://example.com/img.png"],
+        "createdBy": { "id": "u-1", "name": "arbin" }
+      }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |-
+  Returns 201 with the created post and a server-generated UUID `id`.
+  Copy that id into Get / Update / Delete Post.
+
+  All four fields are required (zod-validated):
+  `images` must be an array of valid URLs (`[]` is fine for none).
+  Missing/invalid fields return 400; unknown extra fields are stripped.

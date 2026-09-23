@@ -1,0 +1,33 @@
+info:
+  name: Update Post
+  type: http
+  seq: 4
+
+http:
+  method: PUT
+  url: "{{BASE_URL}}/api/v1/post/{{POST_ID}}"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "title": "Updated Post1",
+        "content": "Updated content",
+        "images": ["https://example.com/updated.png"],
+        "createdBy": { "id": "u-1", "name": "arbin" }
+      }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |-
+  Full replace — the body is validated exactly like Create Post
+  (all four fields required, zod).
+
+  200 = updated · 404 = unknown id · 400 = invalid body.
