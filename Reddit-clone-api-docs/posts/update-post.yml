@@ -27,7 +27,9 @@ settings:
   forwardAuthorizationHeader: true
 
 docs: |-
-  Full replace — the body is validated exactly like Create Post
-  (all four fields required, zod).
+  Partial update — send any subset of title / content / images / createdBy;
+  omitted fields keep their current value ({} is a no-op → 200).
+  Provided fields are type-checked: image urls valid, createdBy complete
+  (both id and name) when present.
 
-  200 = updated · 404 = unknown id · 400 = invalid body.
+  200 = updated · 404 = unknown id · 400 = a provided field is invalid.

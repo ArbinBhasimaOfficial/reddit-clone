@@ -1,4 +1,4 @@
-import type { NextFunction, Request, Response } from "express";
+import type { Request, Response } from "express";
 
 import {
   createPost,
@@ -7,42 +7,23 @@ import {
   listPosts,
   updatePost,
   type CreatePostInput,
+  type UpdatePostInput,
 } from "./post.service.js";
-import { postCreateSchema } from "./schemas/create.schema.js";
 
-// :id is a string now (UUID-style), so there is nothing numeric to parse —
-// we only normalize Express' param typing and let unknown ids fall through to 404.
-function getIdParam(req: Request): string | null {
-  const id = req.params.id;
-  return typeof id === "string" && id !== "" ? id : null;
+// Not validation — validateId middleware already guarded the param; this only
+// narrows Express' `string | string[] | undefined` for TypeScript.
+function getIdParam(req: Request): string {
+  return req.params.id as string;
 }
 
-// Validation middleware in the chain: runs the body through postCreateSchema,
-// then passes control on. To reject, respond here and do NOT call next().
-export function validatePostBody(req: Request, res: Response, next: NextFunction) {
-  const result = postCreateSchema.safeParse(req.body);
-
-  if (!result.success) {
-    // One readable string, e.g. "content: Content is required; images.0: Invalid url ..."
-    const message = result.error.issues
-      .map((issue) =>
-        issue.path.length > 0
-          ? `${issue.path.join(".")}: ${issue.message}`
-          : issue.message,
-      )
-      .join("; ");
-
-    return res.status(400).json({ error: message });
-  }
-
-  req.body = result.data; // replace with zod's output: known keys only, correct types
-  next();
+// validate() middleware put zod's parsed output on req.validatedBody —
+// each handler re-asserts the type matching the schema that ran.
+function readCreateInput(req: Request): CreatePostInput {
+  return req.validatedBody as CreatePostInput;
 }
 
-// validatePostBody already ran the body through postCreateSchema,
-// so the shape is guaranteed — just re-assert it for TypeScript.
-function readPostInput(req: Request): CreatePostInput {
-  return req.body as CreatePostInput;
+function readUpdateInput(req: Request): UpdatePostInput {
+  return req.validatedBody as UpdatePostInput;
 }
 
 export function postIndexHandler(_req: Request, res: Response) {
@@ -51,11 +32,6 @@ export function postIndexHandler(_req: Request, res: Response) {
 
 export function postShowHandler(req: Request, res: Response) {
   const id = getIdParam(req);
-
-  if (id === null) {
-    return res.status(400).json({ error: "id is required" });
-  }
-
   const post = getPost(id);
 
   if (!post) {
@@ -66,19 +42,14 @@ export function postShowHandler(req: Request, res: Response) {
 }
 
 export function postCreateHandler(req: Request, res: Response) {
-  const post = createPost(readPostInput(req));
+  const post = createPost(readCreateInput(req));
 
   res.status(201).json(post);
 }
 
 export function postUpdateHandler(req: Request, res: Response) {
   const id = getIdParam(req);
-
-  if (id === null) {
-    return res.status(400).json({ error: "id is required" });
-  }
-
-  const post = updatePost(id, readPostInput(req));
+  const post = updatePost(id, readUpdateInput(req));
 
   if (!post) {
     return res.status(404).json({ error: "Post not found" });
@@ -88,13 +59,7 @@ export function postUpdateHandler(req: Request, res: Response) {
 }
 
 export function postDeleteHandler(req: Request, res: Response) {
-  const id = getIdParam(req);
-
-  if (id === null) {
-    return res.status(400).json({ error: "id is required" });
-  }
-
-  const deleted = deletePost(id);
+  const deleted = deletePost(getIdParam(req));
 
   if (!deleted) {
     return res.status(404).json({ error: "Post not found" });

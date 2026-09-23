@@ -46,7 +46,7 @@ The project follows a versioned HTTP routing architecture designed around OOP an
 - **OOP Function Chaining:** Server configuration and route registration leverage method chaining for clean readability and setup.
 - **API Versioning:** Versioned routes mounted under a global `api` prefix — `/api/v1` is handled by `v1Router`.
 - **Health Monitoring:** Pre-configured system health endpoints.
-- **Module Architecture:** Feature modules (posts, users) split into `routes → controller → service` layers, composed into their version router. Post payloads are validated by zod against `post/schemas/create.schema.ts` — the single source of truth the service types derive from.
+- **Module Architecture:** Feature modules (posts, users) split into `routes → controller → service` layers, composed into their version router. Post payloads are validated by zod against `post/schemas/create.schema.ts` (create — all fields required) and `post/schemas/update.schema.ts` (PUT — partial update) — the sources of truth the service types derive from.
 
 ### Implemented Routes
 
@@ -58,7 +58,7 @@ The project follows a versioned HTTP routing architecture designed around OOP an
 | `GET` | `/api/v1/post` | List all posts (newest first) | post module (`src/modules/post/`) |
 | `GET` | `/api/v1/post/:id` | Get a post by its UUID → `404` if unknown | post module (`src/modules/post/`) |
 | `POST` | `/api/v1/post` | Create a post — all of `title`, `content`, `images`, `createdBy` required → `201` | post module (`src/modules/post/`) |
-| `PUT` | `/api/v1/post/:id` | Fully replace a post (same body as `POST`) → `200`, `404` if unknown | post module (`src/modules/post/`) |
+| `PUT` | `/api/v1/post/:id` | Partial update — send any subset of `title`/`content`/`images`/`createdBy`; omitted fields keep their value → `200`, `404` if unknown | post module (`src/modules/post/`) |
 | `DELETE` | `/api/v1/post/:id` | Delete a post → `204`, `404` if unknown | post module (`src/modules/post/`) |
 | `GET` | `/api/v1/user` | List all users (newest first) | user module (`src/modules/user/`) |
 | `GET` | `/api/v1/user/:id` | Get a single user by their numeric ID | user module (`src/modules/user/`) |
@@ -79,7 +79,17 @@ The project follows a versioned HTTP routing architecture designed around OOP an
 
 All four fields are required — `images` must be an array of valid URLs (`[]` is fine if there are none). Post `id` is generated server-side as a UUID, and unknown extra fields are stripped from the stored result.
 
-**Error responses:** `400 {"error": ...}` for invalid request bodies (user routes also return `400 "id must be a number"` — post ids are UUID strings, so any unknown post id is simply `404`), `404 {"error": ...}` for an unknown post/user ID, `409 {"error": "username already taken"}` for a duplicate username on create **or update** (keeping your own username is allowed). A global error handler (`registerErrorHandler`, registered right before `startServer()`) catches anything unexpected: `400 {"error": ...}` for malformed JSON bodies (body-parser's status is respected) and `500 {"error": "Internal Server Error"}` for unhandled errors.
+**Example `PUT /api/v1/post/:id` body** (shape defined by zod in `src/modules/post/schemas/update.schema.ts`):
+
+```json
+{
+  "title": "New title only"
+}
+```
+
+Every field is optional — send any subset and only those fields change; omitted fields keep their current value (`{}` is a no-op that still returns `200`). Provided fields are type-checked like create: `images` entries must be valid URLs, and `createdBy` needs both `id` and `name` when present.
+
+**Error responses:** `400 {"error": ...}` for invalid request bodies (user routes also return `400 "id must be a number"` — post ids are UUID strings, so any unknown post id is simply `404`), `404 {"error": ...}` for an unknown post/user ID, `409 {"error": "username already taken"}` for a duplicate username on create **or update** (keeping your own username is allowed). A global error handler (`ErrorHandler` in `server/src/http/error/handler.ts`, registered via `registerErrorHandler()` right before `startServer()`) catches anything thrown or passed to `next(err)` and replies with a `{message, data, status}` envelope: client errors keep their own status (malformed JSON → `400` with the parse error in `message`), a thrown `ZodError` → `422` with `z.treeifyError` output in `data`, and anything else → `500 {"message": "Internal server error", "data": null, "status": 500}`. Route-level validation middleware still replies `400 {"error": ...}` directly.
 
 > **Note:** posts and users are stored in memory — restarting the server clears them.
 

@@ -1,11 +1,14 @@
 import type { PostCreateInput } from "./schemas/create.schema.js";
+import type { PostUpdateInput } from "./schemas/update.schema.js";
 
 // The schema defines what a client may send; the stored Post is that
 // payload plus the id the server generates.
 export type Post = PostCreateInput & { id: string };
 
-// Create and update payloads are exactly what postCreateSchema validates.
+// Create payloads are the full create shape; update payloads are the
+// partial update shape (any subset of fields).
 export type CreatePostInput = PostCreateInput;
+export type UpdatePostInput = PostUpdateInput;
 
 // In-memory store for now — swap for a real database later.
 const posts: Post[] = [];
@@ -31,18 +34,27 @@ export function getPost(id: string): Post | undefined {
   return posts.find((post) => post.id === id);
 }
 
-// Full replace: PUT sends a complete post (validatePostBody enforces the shape).
-export function updatePost(id: string, input: CreatePostInput): Post | undefined {
+// Partial update: PUT sends any subset (postUpdateSchema — every field
+// optional) — only the fields present in the payload change.
+export function updatePost(id: string, input: UpdatePostInput): Post | undefined {
   const post = getPost(id);
 
   if (!post) {
     return undefined;
   }
 
-  post.title = input.title.trim();
-  post.content = input.content.trim();
-  post.images = input.images;
-  post.createdBy = input.createdBy;
+  if (input.title !== undefined) {
+    post.title = input.title.trim();
+  }
+  if (input.content !== undefined) {
+    post.content = input.content.trim();
+  }
+  if (input.images !== undefined) {
+    post.images = input.images;
+  }
+  if (input.createdBy !== undefined) {
+    post.createdBy = input.createdBy;
+  }
   return post;
 }
 

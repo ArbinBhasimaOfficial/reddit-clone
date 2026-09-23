@@ -1,4 +1,5 @@
 import express, { Router, type Express, type NextFunction, type Request, type RequestHandler, type Response } from "express";
+import { ErrorHandler } from "./error/handler.js";
 
 export class Server {
   public app: Express;
@@ -44,17 +45,14 @@ export class Server {
     return this;
   }
 
-  // The 4-arg (err, req, res, next) signature is what tells Express
-  // "this is an error middleware" — it only fires when some earlier
-  // middleware calls next(err) (or a handler throws).
+
   registerErrorHandler() {
     this.app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
       console.error(err);
-      // Body-parser errors carry their own status (malformed JSON → 400).
-      const status = typeof err?.status === "number" ? err.status : 500;
-      return res.status(status).json({
-        error: status >= 500 ? "Internal Server Error" : err.message,
-      });
+      // Handler classifies the error → { status, message, data }
+      const handledError = new ErrorHandler(err);
+      const responsePayload = handledError.handle();
+      return res.status(responsePayload.status).json(responsePayload)
     });
     return this;
   }
