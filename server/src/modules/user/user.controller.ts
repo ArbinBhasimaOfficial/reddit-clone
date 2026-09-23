@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 
+import { sendResponse } from "../../http/response/index.js";
 import {
   createUser,
   deleteUser,
@@ -10,23 +11,33 @@ import {
 } from "./user.service.js";
 
 export function handleListUsers(_req: Request, res: Response) {
-  res.json(listUsers());
+  sendResponse({ res, statusCode: 200, message: "Users fetched", data: listUsers() });
 }
 
 export function handleGetUser(req: Request, res: Response) {
   const id = Number(req.params.id);
 
   if (!Number.isInteger(id)) {
-    return res.status(400).json({ error: "id must be a number" });
+    return sendResponse({
+      res,
+      statusCode: 400,
+      message: "id must be a number",
+      data: { error: "id must be a number" },
+    });
   }
 
   const user = getUser(id);
 
   if (!user) {
-    return res.status(404).json({ error: "User not found" });
+    return sendResponse({
+      res,
+      statusCode: 404,
+      message: "User not found",
+      data: { error: "User not found" },
+    });
   }
 
-  res.json(user);
+  sendResponse({ res, statusCode: 200, message: "User fetched", data: user });
 }
 
 export function handleCreateUser(req: Request, res: Response) {
@@ -36,23 +47,38 @@ export function handleCreateUser(req: Request, res: Response) {
   // Usernames are unique (like Reddit) — this is business logic, so it
   // lives here where the service can answer "does this name exist?"
   if (findUserByUsername(username.trim())) {
-    return res.status(409).json({ error: "username already taken" });
+    return sendResponse({
+      res,
+      statusCode: 409,
+      message: "username already taken",
+      data: { error: "username already taken" },
+    });
   }
 
   const user = createUser({ username, email });
 
-  res.status(201).json(user);
+  sendResponse({ res, statusCode: 201, message: "User created", data: user });
 }
 
 export function handleUpdateUser(req: Request, res: Response) {
   const id = Number(req.params.id);
 
   if (!Number.isInteger(id)) {
-    return res.status(400).json({ error: "id must be a number" });
+    return sendResponse({
+      res,
+      statusCode: 400,
+      message: "id must be a number",
+      data: { error: "id must be a number" },
+    });
   }
 
   if (!getUser(id)) {
-    return res.status(404).json({ error: "User not found" });
+    return sendResponse({
+      res,
+      statusCode: 404,
+      message: "User not found",
+      data: { error: "User not found" },
+    });
   }
 
   // username/email already validated by requireUserBody middleware
@@ -61,30 +87,50 @@ export function handleUpdateUser(req: Request, res: Response) {
   // Uniqueness must survive updates too — but a user may keep their own name.
   const taken = findUserByUsername(username.trim());
   if (taken && taken.id !== id) {
-    return res.status(409).json({ error: "username already taken" });
+    return sendResponse({
+      res,
+      statusCode: 409,
+      message: "username already taken",
+      data: { error: "username already taken" },
+    });
   }
 
   const updated = updateUser(id, { username, email });
 
   if (!updated) {
-    return res.status(404).json({ error: "User not found" });
+    return sendResponse({
+      res,
+      statusCode: 404,
+      message: "User not found",
+      data: { error: "User not found" },
+    });
   }
 
-  res.json(updated);
+  sendResponse({ res, statusCode: 200, message: "User updated", data: updated });
 }
 
 export function handleDeleteUser(req: Request, res: Response) {
   const id = Number(req.params.id);
 
   if (!Number.isInteger(id)) {
-    return res.status(400).json({ error: "id must be a number" });
+    return sendResponse({
+      res,
+      statusCode: 400,
+      message: "id must be a number",
+      data: { error: "id must be a number" },
+    });
   }
 
   const deleted = deleteUser(id);
 
   if (!deleted) {
-    return res.status(404).json({ error: "User not found" });
+    return sendResponse({
+      res,
+      statusCode: 404,
+      message: "User not found",
+      data: { error: "User not found" },
+    });
   }
 
-  res.status(204).send(); // 204 No Content — deleted, nothing left to return
+  sendResponse({ res, statusCode: 204, message: "User deleted", data: null }); // Express strips the 204 body
 }

@@ -52,7 +52,7 @@ export class Server {
       // Handler classifies the error → { status, message, data }
       const handledError = new ErrorHandler(err);
       const responsePayload = handledError.handle();
-      return res.status(responsePayload.status).json(responsePayload)
+      return res.status(responsePayload.statusCode).json(responsePayload)
     });
     return this;
   }

@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 
+import { sendResponse } from "../../http/response/index.js";
 import {
   createPost,
   deletePost,
@@ -27,7 +28,7 @@ function readUpdateInput(req: Request): UpdatePostInput {
 }
 
 export function postIndexHandler(_req: Request, res: Response) {
-  res.json(listPosts());
+  sendResponse({ res, statusCode: 200, message: "Posts fetched", data: listPosts() });
 }
 
 export function postShowHandler(req: Request, res: Response) {
@@ -35,16 +36,21 @@ export function postShowHandler(req: Request, res: Response) {
   const post = getPost(id);
 
   if (!post) {
-    return res.status(404).json({ error: "Post not found" });
+    return sendResponse({
+      res,
+      statusCode: 404,
+      message: "Post not found",
+      data: { error: "Post not found" },
+    });
   }
 
-  res.json(post);
+  sendResponse({ res, statusCode: 200, message: "Post fetched", data: post });
 }
 
 export function postCreateHandler(req: Request, res: Response) {
   const post = createPost(readCreateInput(req));
 
-  res.status(201).json(post);
+  sendResponse({ res, statusCode: 201, message: "Post created", data: post });
 }
 
 export function postUpdateHandler(req: Request, res: Response) {
@@ -52,18 +58,28 @@ export function postUpdateHandler(req: Request, res: Response) {
   const post = updatePost(id, readUpdateInput(req));
 
   if (!post) {
-    return res.status(404).json({ error: "Post not found" });
+    return sendResponse({
+      res,
+      statusCode: 404,
+      message: "Post not found",
+      data: { error: "Post not found" },
+    });
   }
 
-  res.json(post);
+  sendResponse({ res, statusCode: 200, message: "Post updated", data: post });
 }
 
 export function postDeleteHandler(req: Request, res: Response) {
   const deleted = deletePost(getIdParam(req));
 
   if (!deleted) {
-    return res.status(404).json({ error: "Post not found" });
+    return sendResponse({
+      res,
+      statusCode: 404,
+      message: "Post not found",
+      data: { error: "Post not found" },
+    });
   }
 
-  res.status(204).send(); // 204 No Content — deleted, nothing left to return
+  sendResponse({ res, statusCode: 204, message: "Post deleted", data: null }); // Express strips the 204 body
 }

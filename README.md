@@ -10,6 +10,7 @@ A modular, scalable Express + TypeScript RESTful API for a Reddit Clone, develop
 * **Package Manager:** `pnpm`
 * **Language:** TypeScript (`tsc`)
 * **Framework:** Express.js (`express`, `@types/express`)
+* **Validation:** `zod` (post create/update schemas → shared `validate()` middleware)
 
 ---
 
@@ -20,20 +21,29 @@ The project follows a versioned HTTP routing architecture designed around OOP an
 ```text
 .
 ├── client/                     # Frontend (not yet implemented)
-├── Reddit-clone-api-docs/      # API collection manifest (OpenCollection + Bruno)
+├── Reddit-clone-api-docs/      # Bruno requests for all 13 endpoints (OpenCollection YAML)
 ├── server/
 │   ├── src/
 │   │   ├── http/
-│   │   │   ├── server.ts       # Server class (OOP chaining)
+│   │   │   ├── server.ts           # Server class (OOP chaining)
+│   │   │   ├── error/
+│   │   │   │   ├── handler.ts      # ErrorHandler — Zod / Custom / generic dispatch
+│   │   │   │   └── customError.ts  # CustomError (statusCode + data)
+│   │   │   ├── response/
+│   │   │   │   └── index.ts        # sendResponse — shared controller replies
 │   │   │   └── routes/
 │   │   │       ├── v1/
 │   │   │       │   └── router.ts   # v1Router + mounts module routers (post, user)
 │   │   │       └── v2/
 │   │   │           └── router.ts   # v2Router (exists, not mounted yet)
+│   │   ├── middleware/
+│   │   │   └── validation.middleware.ts  # validate(zodSchema) + validateId
+│   │   ├── @types/express/
+│   │   │   └── index.d.ts          # validatedBody on Express.Request
 │   │   ├── modules/
-│   │   │   ├── post/            # Post module (schemas/routes/controller/service)
-│   │   │   └── user/            # User module (routes/controller/service)
-│   │   └── index.ts            # Server initialization
+│   │   │   ├── post/               # Post module (schemas/routes/controller/service)
+│   │   │   └── user/               # User module (routes/controller/service)
+│   │   └── index.ts                # Server initialization
 │   ├── package.json
 │   └── tsconfig.json
 └── README.md
@@ -89,7 +99,7 @@ All four fields are required — `images` must be an array of valid URLs (`[]` i
 
 Every field is optional — send any subset and only those fields change; omitted fields keep their current value (`{}` is a no-op that still returns `200`). Provided fields are type-checked like create: `images` entries must be valid URLs, and `createdBy` needs both `id` and `name` when present.
 
-**Error responses:** `400 {"error": ...}` for invalid request bodies (user routes also return `400 "id must be a number"` — post ids are UUID strings, so any unknown post id is simply `404`), `404 {"error": ...}` for an unknown post/user ID, `409 {"error": "username already taken"}` for a duplicate username on create **or update** (keeping your own username is allowed). A global error handler (`ErrorHandler` in `server/src/http/error/handler.ts`, registered via `registerErrorHandler()` right before `startServer()`) catches anything thrown or passed to `next(err)` and replies with a `{message, data, status}` envelope: client errors keep their own status (malformed JSON → `400` with the parse error in `message`), a thrown `ZodError` → `422` with `z.treeifyError` output in `data`, and anything else → `500 {"message": "Internal server error", "data": null, "status": 500}`. Route-level validation middleware still replies `400 {"error": ...}` directly.
+**Error responses:** `400 {"error": ...}` for invalid request bodies (user routes also return `400 "id must be a number"` — post ids are UUID strings, so any unknown post id is simply `404`), `404 {"error": ...}` for an unknown post/user ID, `409 {"error": "username already taken"}` for a duplicate username on create **or update** (keeping your own username is allowed). A global error handler (`ErrorHandler` in `server/src/http/error/handler.ts`, registered via `registerErrorHandler()` right before `startServer()`) catches anything thrown or passed to `next(err)` and replies with a `{message, data, status}` envelope: a thrown `CustomError` (`server/src/http/error/customError.ts`) → its own `statusCode`, `message`, and `data`; client errors keep their own status (malformed JSON → `400` with the parse error in `message`), a thrown `ZodError` → `422` with `z.treeifyError` output in `data`, and anything else → `500 {"message": "Internal server error", "data": null, "status": 500}`. Route-level validation middleware still replies `400 {"error": ...}` directly.
 
 > **Note:** posts and users are stored in memory — restarting the server clears them.
 
@@ -168,6 +178,7 @@ server
   .useMiddleware(json())     // parse JSON request bodies
   .createGlobalPrefix("api") // all routes live under /api
   .registerRoutes("v1", v1Router)
+  .registerErrorHandler()    // after routes: catch thrown / next(err) errors
   .startServer();            // always last: listen after everything is registered
 ```
 
