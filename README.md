@@ -20,32 +20,38 @@ The project follows a versioned HTTP routing architecture designed around OOP an
 
 ```text
 .
-├── client/                     # Frontend (not yet implemented)
-├── Reddit-clone-api-docs/      # Bruno requests for all 13 endpoints (OpenCollection YAML)
-├── server/
-│   ├── src/
-│   │   ├── http/
-│   │   │   ├── server.ts           # Server class (OOP chaining)
-│   │   │   ├── error/
-│   │   │   │   ├── handler.ts      # ErrorHandler — Zod / Custom / generic dispatch
-│   │   │   │   └── customError.ts  # CustomError (statusCode + data)
-│   │   │   ├── response/
-│   │   │   │   └── index.ts        # sendResponse — shared controller replies
-│   │   │   └── routes/
-│   │   │       ├── v1/
-│   │   │       │   └── router.ts   # v1Router + mounts module routers (post, user)
-│   │   │       └── v2/
-│   │   │           └── router.ts   # v2Router (exists, not mounted yet)
-│   │   ├── middleware/
-│   │   │   └── validation.middleware.ts  # validate(zodSchema) + validateId
-│   │   ├── @types/express/
-│   │   │   └── index.d.ts          # validatedBody on Express.Request
-│   │   ├── modules/
-│   │   │   ├── post/               # Post module (schemas/routes/controller/service)
-│   │   │   └── user/               # User module (routes/controller/service)
-│   │   └── index.ts                # Server initialization
-│   ├── package.json
-│   └── tsconfig.json
+├── apps/
+│   ├── client/                      # Next.js 16 frontend (pnpm dev → :3000; Next rules live in its AGENTS.md)
+│   └── server/                      # Express API — formerly top-level server/, internals unchanged
+│       ├── src/
+│       │   ├── http/
+│       │   │   ├── server.ts           # Server class (OOP chaining)
+│       │   │   ├── error/
+│       │   │   │   ├── handler.ts      # ErrorHandler — Zod / Custom / generic dispatch
+│       │   │   │   └── customError.ts  # CustomError (statusCode + data)
+│       │   │   ├── response/
+│       │   │   │   └── index.ts        # sendResponse — shared controller replies
+│       │   │   └── routes/
+│       │   │       ├── v1/
+│       │   │       │   └── router.ts   # v1Router + mounts module routers (post, user)
+│       │   │       └── v2/
+│       │   │           └── router.ts   # v2Router (exists, not mounted yet)
+│       │   ├── middleware/
+│       │   │   └── validation.middleware.ts  # validate(zodSchema) + validateId
+│       │   ├── @types/express/
+│       │   │   └── index.d.ts          # validatedBody on Express.Request
+│       │   ├── modules/
+│       │   │   ├── post/               # Post module (schemas/routes/controller/service)
+│       │   │   └── user/               # User module (routes/controller/service)
+│       │   └── index.ts                # Server initialization
+│       ├── package.json
+│       └── tsconfig.json
+├── packages/
+│   └── shared/                     # @reddit-clone/shared — zod schemas + types (barrel src/index.ts → dist/)
+├── Reddit-clone-api-docs/          # Bruno requests for all 13 endpoints (OpenCollection YAML)
+├── package.json                    # root turbo scripts — needs a turbo.json (not created yet)
+├── pnpm-workspace.yaml             # workspace globs: apps/*, packages/* (+ allowBuilds)
+├── pnpm-lock.yaml                  # single lockfile for the whole workspace
 └── README.md
 ```
 
